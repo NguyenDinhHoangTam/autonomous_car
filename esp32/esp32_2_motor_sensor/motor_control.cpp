@@ -1,9 +1,8 @@
 #include "motor_control.h"
+#include <Arduino.h>
 
 static inline int clamp255(int v) {
-  if (v < 0) v = 0;
-  if (v > 255) v = 255;
-  return v;
+  return constrain(v, 0, 255);
 }
 
 void setupMotors() {
@@ -12,11 +11,9 @@ void setupMotors() {
   pinMode(IN3_PIN, OUTPUT);
   pinMode(IN4_PIN, OUTPUT);
 
-  // cấu hình PWM
-  ledcSetup(PWM_CH_A, PWM_FREQ, PWM_RES_BITS);
-  ledcSetup(PWM_CH_B, PWM_FREQ, PWM_RES_BITS);
-  ledcAttachPin(ENA_PIN, PWM_CH_A);
-  ledcAttachPin(ENB_PIN, PWM_CH_B);
+  // PWM (LEDC) – dùng high-level API
+  ledcAttach(ENA_PIN, PWM_FREQ, PWM_RES_BITS); // PWM cho motor A
+  ledcAttach(ENB_PIN, PWM_FREQ, PWM_RES_BITS); // PWM cho motor B
 
   stopMotors();
 }
@@ -25,19 +22,19 @@ void motorA(bool forward, int speed) {
   speed = clamp255(speed);
   digitalWrite(IN1_PIN, forward ? HIGH : LOW);
   digitalWrite(IN2_PIN, forward ? LOW  : HIGH);
-  ledcWrite(PWM_CH_A, speed);
+  ledcWrite(ENA_PIN, speed);
 }
 
 void motorB(bool forward, int speed) {
   speed = clamp255(speed);
   digitalWrite(IN3_PIN, forward ? HIGH : LOW);
   digitalWrite(IN4_PIN, forward ? LOW  : HIGH);
-  ledcWrite(PWM_CH_B, speed);
+  ledcWrite(ENB_PIN, speed);
 }
 
 void stopMotors() {
-  ledcWrite(PWM_CH_A, 0);
-  ledcWrite(PWM_CH_B, 0);
+  ledcWrite(ENA_PIN, 0);
+  ledcWrite(ENB_PIN, 0);
 }
 
 void moveForward(int speed) {
@@ -51,19 +48,16 @@ void moveBackward(int speed) {
 }
 
 void turnLeft(int speed) {
-  // Trái lùi, phải tiến
   motorA(false, speed);
   motorB(true,  speed);
 }
 
 void turnRight(int speed) {
-  // Trái tiến, phải lùi
   motorA(true,  speed);
   motorB(false, speed);
 }
 
 void setMotorSpeeds(int leftSpeed, int rightSpeed) {
-  // leftSpeed/rightSpeed: -255..255 (âm = lùi)
   if (leftSpeed >= 0) motorA(true,  leftSpeed);
   else                motorA(false, -leftSpeed);
 
