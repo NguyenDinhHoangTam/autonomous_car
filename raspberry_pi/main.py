@@ -36,7 +36,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Autonomous car controller")
     parser.add_argument("--usb-port", default="/dev/ttyUSB0", help="ESP32-1 USB port")
     parser.add_argument("--uart-port", default="/dev/ttyS0", help="ESP32-2 UART port")
-    parser.add_argument("--baud-usb", type=int, default=921_600, help="USB baudrate")
+    parser.add_argument("--baud-usb", type=int, default=115_200, help="USB baudrate")
     parser.add_argument("--baud-uart", type=int, default=115_200, help="UART baudrate")
     parser.add_argument(
         "--loop-rate",

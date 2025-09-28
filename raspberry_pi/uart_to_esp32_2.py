@@ -30,7 +30,7 @@ LOGGER = logging.getLogger("raspberry_pi.esp32_uart")
 class UARTToESP32:
     """High level interface to ESP32-2 via ``/dev/ttyS0``."""
 
-   VALID_COMMANDS = {"F", "B", "L", "R", "S"}
+    VALID_COMMANDS = {"F", "B", "L", "R", "S"}
 
     def __init__(
         self,

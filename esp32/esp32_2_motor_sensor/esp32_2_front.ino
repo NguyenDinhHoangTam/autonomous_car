@@ -6,7 +6,7 @@
 
 void setup() {
   Serial.begin(115200);    // Debug
-  Serial2.begin(9600, SERIAL_8N1, 16, 17); // UART2 với Pi (RX=16, TX=17)
+  Serial2.begin(115200, SERIAL_8N1, 16, 17); // UART2 với Pi (RX=16, TX=17)
 
   setupMotors();
   setupIRSensor();
