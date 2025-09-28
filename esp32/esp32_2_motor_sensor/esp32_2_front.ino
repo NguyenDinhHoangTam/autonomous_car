@@ -29,9 +29,10 @@ void loop() {
   }
 
   // Có thể gửi dữ liệu về Pi nếu muốn
-  // Ví dụ gửi khoảng cách cảm biến trước
+  
   int distFront = readUltrasonic(SENSOR_FRONT);
-  Serial2.println(distFront);
-
+  int distRight = readUltrasonic(SENSOR_RIGHT);
+  bool irRight = readIRRight();
+  uartSendStatus(distFront, distRight, irRight);
   delay(100);
 }

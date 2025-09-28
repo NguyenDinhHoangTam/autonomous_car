@@ -23,6 +23,8 @@ from .utils.uart_utils import (
 
 LOGGER = logging.getLogger("raspberry_pi.esp32_usb")
 
+VALID_DRIVE_COMMANDS = {"F", "B", "L", "R", "S"}
+
 
 class USBToESP32:
     """Manage communication with ESP32-1 over USB."""
@@ -54,6 +56,13 @@ class USBToESP32:
         for line in iter_available_lines(self._serial):
             if line.startswith("LINE"):
                 line_data = self._parse_line_packet(line)
+            elif line.startswith("STAT"):
+                stat_line, packet = self._parse_stat_packet(line)
+                if stat_line:
+                    line_data = stat_line
+                if packet:
+                    sensor_packets.append(packet)
+                    self._last_sensor_packet = packet
             elif line.startswith("SENSOR"):
                 packet = self._parse_sensor_packet(line)
                 if packet:
@@ -98,6 +107,38 @@ class USBToESP32:
             packet["timestamp"] = time.time()
             LOGGER.debug("Parsed sensor packet: %s", packet)
         return packet or None
+    def _parse_stat_packet(
+        self, line: str
+    ) -> Tuple[Optional[Dict[str, float]], Optional[Dict[str, float | str]]]:
+        _, *payload = line.split(",")
+        timestamp = time.time()
+        keys = ("ultrasonic_left_cm", "ultrasonic_rear_cm", "ir_left", "rear_servo_deg")
+        sensor_packet: Dict[str, float | str] = {}
+        for key, value in zip(keys, payload):
+            sensor_packet[key] = _maybe_float(value)
+        if sensor_packet:
+            sensor_packet["timestamp"] = timestamp
+            LOGGER.debug("Parsed STAT packet: %s", sensor_packet)
+
+        line_data: Optional[Dict[str, float]] = None
+        ir_value = sensor_packet.get("ir_left") if sensor_packet else None
+        numeric_ir: Optional[float]
+        if isinstance(ir_value, (int, float)):
+            numeric_ir = float(ir_value)
+        elif isinstance(ir_value, str):
+            try:
+                numeric_ir = float(ir_value)
+            except ValueError:
+                numeric_ir = None
+        else:
+            numeric_ir = None
+
+        if numeric_ir is not None:
+            # Map IR reading (1=line detected on the left) into the 0..1 range.
+            position = 0.1 if numeric_ir >= 0.5 else 0.9
+            line_data = {"position": position, "timestamp": timestamp}
+
+        return line_data, sensor_packet or None
 
     # ------------------------------------------------------------------
     # Commands
@@ -110,7 +151,13 @@ class USBToESP32:
     def send_drive_command(self, command: str) -> None:
         """Mirror drive commands to the USB board if the firmware expects it."""
 
-        self.send_command(f"CMD,{command}")
+        normalized = command.upper().strip()[:1]
+        if normalized not in VALID_DRIVE_COMMANDS:
+            raise ValueError(
+                f"Unsupported drive command '{command}'. Expected one of "
+                f"{sorted(VALID_DRIVE_COMMANDS)}"
+            )
+        self.send_command(normalized)
 
     # ------------------------------------------------------------------
     # Utilities

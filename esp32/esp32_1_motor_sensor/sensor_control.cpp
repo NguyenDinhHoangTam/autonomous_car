@@ -11,6 +11,8 @@ UltrasonicSensor g_rearUltrasonic(US_REAR_TRIG_PIN, US_REAR_ECHO_PIN);
 ServoControl g_rearServo(SERVO_REAR_PIN);
 int g_servoAngle = 90;
 bool g_initialized = false;
+float g_linePositionFiltered = 0.5f;
+constexpr float LINE_FILTER_ALPHA = 0.25f;
 }
 
 void setupSensorControl() {
@@ -27,6 +29,17 @@ static void ensureInitialized() {
 bool readIRLeft() {
   ensureInitialized();
   return g_leftIR.isLineDetected();
+}
+
+float readLinePosition() {
+  ensureInitialized();
+  const bool lineOnLeft = g_leftIR.isLineDetected();
+  const float target = lineOnLeft ? 0.1f : 0.9f;
+  g_linePositionFiltered =
+      (1.0f - LINE_FILTER_ALPHA) * g_linePositionFiltered +
+      LINE_FILTER_ALPHA * target;
+  g_linePositionFiltered = constrain(g_linePositionFiltered, 0.0f, 1.0f);
+  return g_linePositionFiltered;
 }
 
 long readUltrasonicLeft() {
@@ -70,4 +83,10 @@ String buildSensorStatusCSV() {
 void sendSensorStatus(Stream &port) {
   String line = buildSensorStatusCSV();
   port.println(line);
+}
+
+void sendLineReading(Stream &port) {
+  const float position = readLinePosition();
+  port.print("LINE,");
+  port.println(position, 3);
 }

@@ -16,6 +16,12 @@ void setupSensorControl();
 
 // Đọc trạng thái cảm biến line IR bên trái (true nếu phát hiện line)
 bool readIRLeft();
+// Đọc vị trí line đã chuẩn hóa trong khoảng 0..1 (0 = sát trái, 1 = sát phải)
+float readLinePosition();
+
+// Gửi gói tin LINE,<position> qua cổng Serial tương ứng
+void sendLineReading(Stream &port);
+
 
 // Đo khoảng cách cảm biến siêu âm bên trái (đơn vị cm)
 long readUltrasonicLeft();

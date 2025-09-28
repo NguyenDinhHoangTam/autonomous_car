@@ -30,7 +30,7 @@ LOGGER = logging.getLogger("raspberry_pi.esp32_uart")
 class UARTToESP32:
     """High level interface to ESP32-2 via ``/dev/ttyS0``."""
 
-    VALID_COMMANDS = {"F", "L", "R", "S"}
+   VALID_COMMANDS = {"F", "B", "L", "R", "S"}
 
     def __init__(
         self,
@@ -67,16 +67,27 @@ class UARTToESP32:
         if not line.startswith("STAT"):
             LOGGER.debug("Ignoring non status line from ESP32-2: %s", line)
             return None
-        parts = line.split(",")
+        parts = line.strip().split(",")
         status: Dict[str, float | str] = {}
+        positional_values: list[float] = []
         for token in parts[1:]:
+            token = token.strip()
             if not token:
                 continue
             if "=" not in token:
-                status[token.strip()] = "1"
+                maybe_value = _maybe_float(token)
+                if isinstance(maybe_value, float):
+                    positional_values.append(maybe_value)
+                else:
+                    status[token] = "1"
                 continue
             key, value = token.split("=", 1)
             status[key.strip()] = _maybe_float(value)
+            
+        if positional_values:
+            fallback_keys = ("front", "right", "ir_right")
+            for key, value in zip(fallback_keys, positional_values):
+                status.setdefault(key, value)
         if status:
             self._latest_status = status
             LOGGER.debug("Parsed ESP32-2 status: %s", status)
@@ -91,8 +102,8 @@ class UARTToESP32:
         Parameters
         ----------
         command:
-            Single character command: ``F`` (forward), ``L`` (left), ``R``
-            (right) or ``S`` (stop).
+            Single character command: ``F`` (forward), ``B`` (backward), ``L``
+            (left), ``R`` (right) or ``S`` (stop).
         """
 
         normalized = command.upper().strip()[:1]
@@ -101,7 +112,7 @@ class UARTToESP32:
                 f"Unsupported drive command '{command}'. Expected one of "
                 f"{sorted(self.VALID_COMMANDS)}"
             )
-        send_serial_command(self._serial, f"CMD,{normalized}")
+        send_serial_command(self._serial, normalized)
 
     # ------------------------------------------------------------------
     # Utility helpers
@@ -120,4 +131,5 @@ def _maybe_float(value: str) -> float | str:
     try:
         return float(value)
     except ValueError:
+        return value.strip()
         return value.strip()

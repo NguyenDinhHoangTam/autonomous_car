@@ -46,11 +46,14 @@ void uartHandle() {
 }
 
 void uartSendStatus(int distFront, int distRight, bool irRight) {
-  Serial2.print("STAT,");
+ Serial2.print("STAT,");
+  Serial2.print("front=");
   Serial2.print(distFront);
   Serial2.print(',');
+  Serial2.print("right=");
   Serial2.print(distRight);
   Serial2.print(',');
+  Serial2.print("ir_right=");
   Serial2.print(irRight ? 1 : 0);
   Serial2.print('\n');
 }
