@@ -12,7 +12,7 @@
 #define IN4_PIN   14
 
 // LEDC (PWM) cho ESP32
-#define PWM_FREQ      20000     // 20 kHz để êm tiếng
+#define PWM_FREQ      1000     // 20 kHz để êm tiếng
 #define PWM_RES_BITS  8         // 8-bit (0..255)
 #define PWM_CH_A      0
 #define PWM_CH_B      1
