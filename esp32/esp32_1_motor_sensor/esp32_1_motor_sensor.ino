@@ -1,5 +1,7 @@
 #include "motor_control.h"
 #include "sensor_control.h"
+#include "servo_control.h"   
+
 
 const unsigned long STATUS_INTERVAL_MS = 250;
 const int DEFAULT_DRIVE_SPEED = 180;

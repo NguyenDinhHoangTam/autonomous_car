@@ -5,12 +5,13 @@
 
 class ServoControl {
 public:
-    ServoControl(int pin);
+    ServoControl(int pin, int channel);   // ← thêm channel vào constructor
     void setAngle(int angle);
 
 private:
     Servo servo;
     int pin;
+    int channel;
 };
 
 #endif

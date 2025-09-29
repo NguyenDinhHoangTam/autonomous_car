@@ -1,17 +1,14 @@
 {
-  "configurations": [
-    {
-      "name": "Linux",
-      "includePath": ["/home/admin/.arduino15/packages/esp32/hardware/esp32/*/cores/esp32",
-        "/home/admin/.arduino15/packages/esp32/hardware/esp32/**",
-        "${workspaceFolder}/**"
-      ],
-      "defines": [],
-      "compilerPath": "/usr/bin/gcc",
-      "cStandard": "gnu11",
-      "cppStandard": "gnu++17",
-      "intelliSenseMode": "linux-gcc-x64"
-    }
+  "name": "Linux",
+  "includePath": [
+    "/home/admin/.arduino15/packages/esp32/hardware/esp32/*/cores/esp32",
+    "/home/admin/.arduino15/packages/esp32/hardware/esp32/**",
+    "${workspaceFolder}/**"
   ],
-  "version": 4
+  "defines": [],
+  "compilerPath": "/usr/bin/gcc",
+  "cStandard": "gnu11",
+  "cppStandard": "gnu++17",
+  "intelliSenseMode": "linux-gcc-x64"
 }
+
