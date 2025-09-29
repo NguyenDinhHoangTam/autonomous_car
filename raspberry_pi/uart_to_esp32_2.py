@@ -132,4 +132,4 @@ def _maybe_float(value: str) -> float | str:
         return float(value)
     except ValueError:
         return value.strip()
-        return value.strip()
+        

@@ -5,3 +5,4 @@
 
 void setupServo();
 void setServoAngle(int deg);    // 0..180
+int getServoAngle();
