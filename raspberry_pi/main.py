@@ -9,9 +9,10 @@ import sys
 import time
 from typing import Optional
 
-from .camera_servo import CameraServoController
-from .uart_to_esp32_2 import UARTToESP32
-from .usb_to_esp32_1 import USBToESP32
+from raspberry_pi.camera_servo import CameraServoController
+from raspberry_pi.uart_to_esp32_2 import UARTToESP32
+from raspberry_pi.usb_to_esp32_1 import USBToESP32
+
 
 
 LOGGER = logging.getLogger("raspberry_pi.main")
