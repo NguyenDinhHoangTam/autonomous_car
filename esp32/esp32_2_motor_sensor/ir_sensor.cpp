@@ -1,12 +1,41 @@
 #include "ir_sensor.h"
-#include <Arduino.h>
+
+namespace {
+
+class IRSensor {
+public:
+  explicit IRSensor(uint8_t pin) : pin_(pin) {}
+
+  void begin() {
+    pinMode(pin_, INPUT);
+  }
+
+  bool isLineDetected() const {
+    // Các module cảm biến line phổ biến đưa chân OUT xuống LOW khi gặp line đen.
+    return digitalRead(pin_) == LOW;
+  }
+
+private:
+  uint8_t pin_;
+};
+
+IRSensor g_rightIR(IR_RIGHT_PIN);
+bool g_initialized = false;
+
+void ensureInitialized() {
+  if (!g_initialized) {
+    g_rightIR.begin();
+    g_initialized = true;
+  }
+}
+
+}  // namespace
 
 void setupIRSensor() {
-  pinMode(IR_RIGHT_PIN, INPUT);
+  ensureInitialized();
 }
 
 bool readIRRight() {
-  // Một số module IR line out LOW khi gặp vạch đen, một số thì HIGH.
-  // Tạm thời trả về mức logic trực tiếp; sau khi test thực tế, bạn có thể đảo lại.
-  return digitalRead(IR_RIGHT_PIN) == HIGH;
+  ensureInitialized();
+  return g_rightIR.isLineDetected();
 }
