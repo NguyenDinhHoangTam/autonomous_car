@@ -226,5 +226,9 @@ void loop() {
   bool irRight = readIRRight();
   uartSendStatus(lastFrontDistance, distRight, irRight);
 
+   // Thêm 2 dòng dưới để test gửi dữ liệu IR rõ ràng về Pi:
+  Serial2.print("IR = ");
+  Serial2.println(irRight ? "YES" : "NO");
+
   delay(50);
 }
