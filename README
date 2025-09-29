@@ -1,0 +1,61 @@
+
+Tôi đang làm đồ án tốt nghiệp về xe tự hành đi theo line đã vẽ sẵn. Tôi đã mua phần cứng và láp ráp xong, bao gồm các phần sau:
+-6 pin 18650 dung lượng 3500mah mắc thành 2s 3p
+-Nhánh 1 của pin tôi có gắn 2 cái giảm áp 5v(max 5A) mắc song song với nhau:
++Nhánh 1a tôi cấp nguồn (cho raspberry pi 4 model B và cấp cho  modul esp32 devkit-c(30 chân)
++Nhánh 1b tôi định cấp cho các thiết bị ngoại vi mà tôi chuẩn bị nhờ bạn phân tải giúp tôi và phân sao cho rasberry xử lý tốt công việc của nó( theo sở trường của nó) và esp32 cũng vậy( theo sở trường của nó
+-Nhánh 2 của pin tôi không giảm áp(8.4v max-7.4v min) tôi cấp trực tiếp cho 2 modul L298N(tôi cấp trực tiếp là vì L298N vị sụt áp khoảng 2v, mà 4 động cơ vàng này cần 6-9v để hoạt động) để điều khiển 4 động cơ co gắn bánh xe Mecanum(xoay đa hướng)-2 cái modul này mỗi cái xuất ra 6 dây (bao gồm ENA, IN1, IN2, IN3, IN4, ENB) tổng 2 cái là 12 dây. 
+hiện tại tôi đang remote ssh pi thông qua vscode của laptop
+Tôi kết nối 1 esp(1) với pi bằng cổng usb, 1 esp(2) còn lại tôi kết nối với pi bằng TX-RX(GPIO16 và 17)
+tôi muốn pi làm bộ não điều khiển ra lệnh cho 2esp để xe né vật cản và di chuyển theo line một cách trơn tru và gửi tín hiệu về cho pi
+1) Bảng đấu dây — Raspberry Pi (BCM numbering)
+Thiết bị	Ghi chú
+Camera (CSI)	—
+Servo camera PAN	PWM hardware 13
+Servo camera TILT	PWM hardware 18
+UART to ESP32-2 RX 	nối tới ESP32-2 GPIO17 (TX)-Tím (cross) dươi thấp
+UART to ESP32-2 TX	nối tới ESP32-2 GPIO16 (RX)-Trắng (cross)
+5V (servo & sensors)	Không cấp servo từ 5V Pi
+GND	nối chung với tất cả module
+
+2) Bảng đấu dây — ESP32-1 (USB → Pi-Cai trên cao) 2 bánh sau
+
+Thiết bị	Chân tín hiệu	ESP32-1 GPIO (theo list bạn cho)
+		
+L298N #1 — ENA	ENA	GPIO5 - Nâu
+L298N #1 — IN1	IN1	GPIO18- Đỏ
+L298N #1 — IN2	IN2	GPIO19- Cam
+L298N #1 — IN3	IN3	GPIO21- Vàng
+L298N #1 — IN4	IN4	GPIO22- Lục
+L298N #1 — ENB	ENB	GPIO23 - Xanh dương
+IR dò line (trái) — OUT	OUT-xám	GPIO32- Xam
+HC-SR04 (Left) Trig	Trig-cam	GPIO25 - Tim
+HC-SR04 (Left) Echo	Echo (input)-nâu	GPIO35- Trăng(input-only OK, nhớ level shift)
+HC-SR04 (Rear) Trig	Trig	GPIO26- Xanh dương
+HC-SR04 (Rear) Echo	Echo (input)- xanh dương	GPIO34- Đen (input-only)
+Servo (rear ultrasonic sau)	PWM signal-vàng	GPIO27- Lục
+GND	common ground	GND
+5V (sensor/servo Vcc)	Vcc	5V from regulator (branch 1b)
+
+
+
+
+
+3)Bảng đấu dây — ESP32-2 (UART → Pi GPIO14/15-Cai dươi thâp) 2 bánh trước
+Thiết bị	Ghi chú	ESP32-2 GPIO
+L298N #2 — ENA	PWM cho motor A	GPIO19-Nâu
+L298N #2 — IN1	direction A1	GPIO18-Đỏ
+L298N #2 — IN2	direction A2	GPIO5-Cam
+L298N #2 — IN3	direction B1	GPIO4 -Vàng
+L298N #2 — IN4	direction B2	GPIO14-Lục
+L298N #2 — ENB	PWM cho motor B	GPIO13- Xanh dương
+IR dò line phải	OUT	GPIO33- Lục
+HC-SR04 (Right) Trig	Trig	GPIO25- Xanh dương
+HC-SR04 (Right) Echo	Echo (input)	GPIO34- Cam (input-only — qua level shifter)
+HC-SR04 (Front-trươc) Trig (moved from Pi)	Trig	GPIO32-Vàng
+HC-SR04 (Front) Echo (moved from Pi)	Echo (input)	GPIO36-Đỏ (input-only — qua level shifter)
+Servo (front ultrasonic trước)	PWM signal	GPIO26-Tim
+UART → Pi (TX)	ESP → Pi TX	GPIO17 (UART2 TX) → Pi GPIO15 (RX)
+UART ← Pi (RX)	ESP ← Pi RX	GPIO16 (UART2 RX) ← Pi GPIO14 (TX)
+5V Vcc	Vcc	5V from regulator (branch 1b)
+GND	common ground	GND
