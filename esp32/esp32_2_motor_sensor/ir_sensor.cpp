@@ -1,4 +1,5 @@
 #include "ir_sensor.h"
+#include <Arduino.h>
 
 void setupIRSensor() {
   pinMode(IR_RIGHT_PIN, INPUT);

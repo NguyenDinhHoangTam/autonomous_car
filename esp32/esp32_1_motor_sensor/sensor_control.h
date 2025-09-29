@@ -6,9 +6,9 @@
 // Chân kết nối phần cứng cho ESP32-1
 #define IR_LEFT_PIN 32
 #define US_LEFT_TRIG_PIN 25
-#define US_LEFT_ECHO_PIN 34
+#define US_LEFT_ECHO_PIN 35
 #define US_REAR_TRIG_PIN 26
-#define US_REAR_ECHO_PIN 35
+#define US_REAR_ECHO_PIN 34
 #define SERVO_REAR_PIN 27
 
 // Khởi tạo toàn bộ cảm biến và servo phía sau

@@ -34,6 +34,7 @@ static unsigned long stateEnteredAt = 0;
 static int scanRightDistance = -1;
 static int scanLeftDistance = -1;
 static int lastFrontDistance = -1;
+static int obstacleHitCount = 0;
 
 constexpr int DEFAULT_SPEED = 170;
 constexpr int OBSTACLE_THRESHOLD_CM = 25;
@@ -42,6 +43,7 @@ constexpr unsigned long TURN_DURATION_MS = 550;
 constexpr unsigned long FORWARD_DURATION_MS = 750;
 constexpr unsigned long RETURN_DURATION_MS = 550;
 constexpr unsigned long RESCAN_INTERVAL_MS = 1200;
+constexpr int OBSTACLE_CONFIRM_COUNT = 3;
 
 static void enterAvoidState(AvoidState newState) {
   avoidState = newState;
@@ -74,10 +76,17 @@ static void updateAvoidanceLogic() {
       }
       lastFrontDistance = readUltrasonic(SENSOR_FRONT);
       if (lastFrontDistance != -1 && lastFrontDistance <= OBSTACLE_THRESHOLD_CM) {
+        obstacleHitCount++;
+      } else {
+        obstacleHitCount = 0;
+      }
+
+      if (obstacleHitCount >= OBSTACLE_CONFIRM_COUNT) {
         stopMotors();
         scanRightDistance = -1;
         scanLeftDistance = -1;
         escapePlan = ESCAPE_NONE;
+        obstacleHitCount = 0;
         setServoAngle(0);  // quay sang phải trước
         enterAvoidState(AVOID_WAIT_RIGHT);
       }
@@ -102,24 +111,24 @@ static void updateAvoidanceLogic() {
       break;
 
     case AVOID_DECIDE: {
-        bool rightClear = (scanRightDistance == -1) || (scanRightDistance > OBSTACLE_THRESHOLD_CM);
-        bool leftClear = (scanLeftDistance == -1) || (scanLeftDistance > OBSTACLE_THRESHOLD_CM);
+      bool rightClear = (scanRightDistance == -1) || (scanRightDistance > OBSTACLE_THRESHOLD_CM);
+      bool leftClear = (scanLeftDistance == -1) || (scanLeftDistance > OBSTACLE_THRESHOLD_CM);
 
-        if (leftClear) {
-          escapePlan = ESCAPE_LEFT;  // ưu tiên né về bên trái
-          turnLeft(DEFAULT_SPEED);
-          enterAvoidState(AVOID_EXEC_TURN);
-        } else if (rightClear) {
-          escapePlan = ESCAPE_RIGHT;
-          turnRight(DEFAULT_SPEED);
-          enterAvoidState(AVOID_EXEC_TURN);
-        } else {
-          escapePlan = ESCAPE_NONE;
-          stopMotors();
-          enterAvoidState(AVOID_BLOCKED);
-        }
+      if (leftClear) {
+        escapePlan = ESCAPE_LEFT;  // ưu tiên né về bên trái
+        turnLeft(DEFAULT_SPEED);
+        enterAvoidState(AVOID_EXEC_TURN);
+      } else if (rightClear) {
+        escapePlan = ESCAPE_RIGHT;
+        turnRight(DEFAULT_SPEED);
+        enterAvoidState(AVOID_EXEC_TURN);
+      } else {
+        escapePlan = ESCAPE_NONE;
+        stopMotors();
+        enterAvoidState(AVOID_BLOCKED);
       }
-      break;
+    }
+    break;
 
     case AVOID_EXEC_TURN:
       if (now - stateEnteredAt >= TURN_DURATION_MS) {
@@ -153,6 +162,7 @@ static void updateAvoidanceLogic() {
         setServoAngle(90);
         lastFrontDistance = readUltrasonic(SENSOR_FRONT);
         escapePlan = ESCAPE_NONE;
+        obstacleHitCount = 0;
         enterAvoidState(AVOID_IDLE);
       }
       break;
@@ -163,6 +173,7 @@ static void updateAvoidanceLogic() {
       }
       lastFrontDistance = readUltrasonic(SENSOR_FRONT);
       if (lastFrontDistance == -1 || lastFrontDistance > OBSTACLE_THRESHOLD_CM) {
+        obstacleHitCount = 0;
         enterAvoidState(AVOID_IDLE);
       } else if (now - stateEnteredAt >= RESCAN_INTERVAL_MS) {
         setServoAngle(0);
@@ -174,7 +185,8 @@ static void updateAvoidanceLogic() {
 
 // ---------------------------------------------------------------------------
 //  Thiết lập & vòng lặp chính
-// ---------------------------------------------------------------------------  
+// ---------------------------------------------------------------------------
+
 void setup() {
   Serial.begin(115200);    // Debug
   Serial2.begin(115200, SERIAL_8N1, 16, 17); // UART2 với Pi (RX=16, TX=17)
@@ -188,7 +200,7 @@ void setup() {
 }
 
 void loop() {
-    while (Serial2.available()) {
+  while (Serial2.available()) {
     char incoming = (char)Serial2.read();
     if (incoming == '\r' || incoming == '\n') {
       continue;
@@ -199,6 +211,7 @@ void loop() {
         stopMotors();
         escapePlan = ESCAPE_NONE;
         setServoAngle(90);
+        obstacleHitCount = 0;
         enterAvoidState(AVOID_IDLE);
       }
       continue;  // Đang né vật cản, bỏ qua lệnh khác từ Pi
@@ -207,13 +220,11 @@ void loop() {
     handleManualCommand(incoming);
   }
 
-  // Có thể gửi dữ liệu về Pi nếu muốn
-  
-    updateAvoidanceLogic();
+  updateAvoidanceLogic();
 
   int distRight = readUltrasonic(SENSOR_RIGHT);
   bool irRight = readIRRight();
-   uartSendStatus(lastFrontDistance, distRight, irRight);
+  uartSendStatus(lastFrontDistance, distRight, irRight);
 
   delay(50);
 }
